@@ -12,3 +12,6 @@ build
 ./app/bin/
 ./app/build/
 
+.settings/org.eclipse.buildship.core.prefs
+app/.settings
+app/bin
