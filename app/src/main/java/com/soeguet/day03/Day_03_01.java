@@ -1,66 +1,131 @@
 package com.soeguet.day03;
 
-import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.net.NetworkInterface;
 
 public class Day_03_01 {
 
     public Day_03_01() {
 
         String input = getInput();
-        Stream<String> lines = input.lines();
-        ArrayList<Point> pointColumnList = new ArrayList<>();
-        ArrayList<ArrayList<Point>> rowList = new ArrayList<>();
 
-        lines.forEach(line -> {
+        char[][] matrix = convertMultiLineStringToMatrix(input);
 
-            char[] charArray = line.toCharArray();
+        int neighbours = this.determinNeighbourCount(matrix, 4, 0);
 
-            String concatValue = "";
-
-            for (int i = 0; i < charArray.length; i++) {
-
-                char abc = charArray[i];
-
-                if (Character.isDigit(abc)){
-                    
-
-                    concatValue = concatValue + abc;
-                }
-                else if (abc == '.') {
-                    
-                    concatValue = "";
-                }
-                else if (!Character.isLetterOrDigit(abc)) {
-                    
-                }
-            }
-        });
-
-        System.out.println(input);
+        System.out.println(neighbours);
     }
 
-    public class Point {
 
-        private int row;
-        private int column;
-        private Type type;
-        private int value;
-        private boolean evaluate = false;
+    private int determinNeighbourCount(char[][] matrix, int row, int column) {
 
-        public int lookForValue() {
+        int neighbourCount = 0;
 
-            if (evaluate) {
+        int[] columnArray = new int[]{-1, 0, 1};
+        int[] rowArray = new int[]{-1, 0, 1};
 
-                return value;
+        for (int r = 0; r < rowArray.length; r++) {
+            
+            for (int c = 0; c < columnArray.length; c++) {
+                
+                if (r == 0 && c == 0) {
+                    
+                    continue;
+                }
+
+                if (pointOutOfBounds(matrix, r, c)) {
+                    
+                    continue;
+                }
             }
+        }
+
+
+
+
+
+
+        return 0;
+    }
+
+
+    private boolean pointOutOfBounds(char[][] matrix, int r, int c) {
+        return false;
+    }
+
+
+    // ready
+    private int grabValueAtPoint(char[][] matrix, int row, int column) {
+
+        if (!Character.isDigit(matrix[row][column])) {
 
             return 0;
         }
+
+        String valueAtPoint = "" + matrix[row][column];
+
+        int indexForwards = 0;
+        int indexBackwards = 0;
+
+        // forwards
+        do {
+
+            indexForwards++;
+
+            // if out of bounds
+            if (column + indexForwards > matrix[row].length - 1) {
+                break;
+            }
+
+            char spot = matrix[row][column + indexForwards];
+            if (!Character.isDigit(spot)) {
+
+                break;
+
+            } else {
+
+                valueAtPoint = valueAtPoint + spot;
+            }
+
+        } while (true);
+
+        // backwards
+        do {
+
+            indexBackwards--;
+
+            // if out of bounds
+            if (column + indexBackwards < 0) {
+
+                break;
+            }
+
+            char spot = matrix[row][column + indexBackwards];
+            if (!Character.isDigit(spot)) {
+
+                break;
+
+            } else {
+
+                valueAtPoint = spot + valueAtPoint;
+            }
+
+        } while (true);
+
+        return Integer.parseInt(valueAtPoint);
     }
 
-    enum Type {
-        NONE, DIGIT, CHAR
+    private char[][] convertMultiLineStringToMatrix(String input) {
+        String[] lines = input.split("\\n");
+        char[][] matrix = new char[lines.length][];
+
+        for (int i = 0; i < matrix.length; i++) {
+
+            String row = lines[i].trim();
+
+            matrix[i] = row.toCharArray();
+        }
+
+        return matrix;
     }
 
     private String getInput() {
