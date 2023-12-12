@@ -1,13 +1,11 @@
 package com.soeguet.day03;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicLong;
 
 // 546464 is too low!
 
 public class Day_03_01 {
 
-    private final AtomicLong sum = new AtomicLong(0);
     private final ArrayList<Integer> valuesList = new ArrayList<>();
 
     public Day_03_01() {
