@@ -55,6 +55,7 @@ public class Day_03_01 {
         boolean isAddable = false;
 
         String valueAtPoint = "" + matrix[row][column];
+        isAddable = checkIfAddable(matrix, row, column);
 
         int indexForwards = 0;
         int indexBackwards = 0;
