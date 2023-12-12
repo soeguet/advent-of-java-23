@@ -18,3 +18,5 @@ app/bin
 !/build/
 !/.gradle/
 !/.idea/
+/.idea/
+/.gradle/
