@@ -10,7 +10,7 @@ public class Day_05_01 {
 
     public Day_05_01() {
 
-        ArrayList<Long> seedList = new ArrayList<Long>();
+        ArrayList<Long> seedList = new ArrayList<>();
         AtomicLong shortestDistance = new AtomicLong(0);
 
         Almanac almanac = new Almanac();
@@ -67,6 +67,8 @@ public class Day_05_01 {
 
                 almanac.addMap(map);
             }
+
+
         }
 
         // [3] check for shortest distance
@@ -84,7 +86,7 @@ public class Day_05_01 {
 
     class Almanac {
 
-        java.util.ArrayList<Map> mapList = new java.util.ArrayList<Map>();
+        java.util.ArrayList<Map> mapList = new java.util.ArrayList<>();
 
         public long decodeSeedLocaton(long seed) {
 
@@ -92,7 +94,8 @@ public class Day_05_01 {
             AtomicLong newValue = new AtomicLong(seed);
 
             // map part
-            mapList.forEach(map -> {
+            mapList.forEach(
+                map -> {
 
                 // entry part
                 map.getEntries().forEach(entry -> {
