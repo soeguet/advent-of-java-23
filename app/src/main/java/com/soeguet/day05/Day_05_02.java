@@ -1,7 +1,7 @@
 package com.soeguet.day05;
 
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -10,236 +10,150 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Day_05_02 {
 
     public Day_05_02() {
-        ArrayList<Long> seedList = new ArrayList<>();
-        AtomicLong shortestDistance = new AtomicLong(0);
 
-        Almanac almanac = new Almanac();
+        AtomicLong shortestDistance = new AtomicLong(Long.MAX_VALUE);
+        String[] splitInput = getInput2().trim().split("\n\n");
 
-        String input = getInput();
-        String[] almanacSplit = input.split("\n\n");
+        String[] seedValues = splitInput[0].split(": ")[1].trim().split(" ");
 
-        for (String sections : almanacSplit) {
+        String[][] mapAlamac = {
+                splitInput[1].split("map:\n")[1].trim().split("\n"),
+                splitInput[2].split("map:\n")[1].trim().split("\n"),
+                splitInput[3].split("map:\n")[1].trim().split("\n"),
+                splitInput[4].split("map:\n")[1].trim().split("\n"),
+                splitInput[5].split("map:\n")[1].trim().split("\n"),
+                splitInput[6].split("map:\n")[1].trim().split("\n"),
+                splitInput[7].split("map:\n")[1].trim().split("\n")
+        };
 
-            // [1] set up seeds
-            if (sections.trim().contains(": ")) {
+        try (ExecutorService executors = Executors.newVirtualThreadPerTaskExecutor()) {
 
-                String[] split = sections.trim().split(": ");
+            for (int i = 1; i <= seedValues.length; i += 2) {
 
-                String seeds = split[1].trim();
-                String[] splitSeeds = seeds.split(" ");
+                System.out.println("seedValues.length: " + seedValues.length);
+                System.out.println("i: " + i);
 
-                long seedStart = 0;
-                long seedRange = 0;
-                for (int i = 2; i < splitSeeds.length + 2; i++) {
+                long start = Long.parseLong(seedValues[i - 1]);
+                long range = Long.parseLong(seedValues[i]);
 
-                    if (i % 2 == 0) {
+                for (long j = 0; j < range; j++) {
 
-                        seedStart = Long.parseLong(splitSeeds[i - 2].trim());
-
-                    } else {
-
-                        seedRange = Long.parseLong(splitSeeds[i - 2].trim());
-
-                        for (int j = 0; j < seedRange; j++) {
-                            seedList.add(seedStart + j);
-                        }
-
-                        seedRange = 0;
-                        seedStart = 0;
+                    if (j %10_000 == 0) {
+                        System.out.println("j: " + j);
                     }
-                }
-            }
 
-            // [2] set up maps
-            if (sections.trim().contains(":\n")) {
-
-                String[] mappingWithTitle = sections.trim().split(":\n");
-
-                String title = mappingWithTitle[0].trim();
-
-                Map map = new Map();
-                map.setName(title);
-
-                String mapping = mappingWithTitle[1].trim();
-
-                String[] mappingSplit = mapping.split("\n");
-
-                // [2.1] add entries to maps
-                for (String mapEntry : mappingSplit) {
-
-                    Entry entry = new Entry();
-
-                    String[] mappingValues = mapEntry.trim().split(" ");
-
-                    long destinationRangeStart = Long.parseLong(mappingValues[0].trim());
-                    long sourceRangeStart = Long.parseLong(mappingValues[1].trim());
-                    long rangeLength = Long.parseLong(mappingValues[2].trim());
-
-                    entry.setDestinationRangeStart(destinationRangeStart);
-                    entry.setSourceRangeStart(sourceRangeStart);
-                    entry.setRangeLength(rangeLength);
-
-                    map.addEntry(entry);
-                }
-
-                almanac.addMap(map);
-            }
-
-        }
-
-        // [3] check for shortest distance with virtual threads
-        ExecutorService executorService = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
-        seedList.forEach(seed -> executorService.submit(() -> {
-
-            long distanceLong = almanac.decodeSeedLocaton(seed);
-
-            if (shortestDistance.get() == 0 || distanceLong < shortestDistance.get()) {
-                shortestDistance.set(distanceLong);
-            }
-        }));
-
-        System.out.println("shortest distance: " + shortestDistance.get());
-    }
-
-    class Almanac {
-
-        java.util.ArrayList<Map> mapList = new java.util.ArrayList<>();
-
-        public long decodeSeedLocaton(long seed) {
-
-            AtomicLong seedSequence = new AtomicLong(seed);
-            AtomicLong newValue = new AtomicLong(seed);
-
-            // map part
-            mapList.forEach(
-                    map -> {
-
-                        // entry part
-                        map.getEntries().forEach(entry -> {
-
-                            if (seedSequence.get() == newValue.get()) {
-
-                                long convertValue = entry.convertValue(seedSequence.get());
-
-                                newValue.set(convertValue);
-                            }
-                        });
-
-                        seedSequence.set(newValue.get());
+                    final long seed = start + j;
+                    executors.submit(() -> {
+                        this.determineShortestDistance(mapAlamac, seed, shortestDistance);
                     });
-
-            return newValue.get();
-        }
-
-        public java.util.ArrayList<Map> getMapList() {
-            return mapList;
-        }
-
-        public void setMapList(java.util.ArrayList<Map> mapList) {
-            this.mapList = mapList;
-        }
-
-        public void addMap(Map map) {
-            if (this.mapList == null) {
-                this.mapList = new java.util.ArrayList<Map>();
+                }
             }
-            this.mapList.add(map);
-        }
 
-        @Override
-        public String toString() {
-            return "Almanac [mapList=" + mapList + "]";
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println(e.getMessage());
+        } finally {
+
+            System.out.println("The shortest distance is: " + shortestDistance.get() + " meters");
         }
     }
 
-    class Map {
+    /**
+     * convert seed nr to distance
+     * 
+     * @param mapAlamac
+     * @param seedCurrent
+     * @param shortestDistance
+     */
+    private void determineShortestDistance(String[][] mapAlamac, long seedCurrent, AtomicLong shortestDistance) {
 
-        @Override
-        public String toString() {
-            return "Map [name=" + name + ", entries=" + entries + "]";
-        }
+        System.out.print(".");
+        int almacLength = mapAlamac.length;
+        long seed = seedCurrent;
 
-        String name;
-        java.util.ArrayList<Entry> entries;
+        MapLoop: for (int i = 0; i < almacLength; i++) {
 
-        public String getName() {
-            return name;
-        }
+            String[] entryArray = mapAlamac[i];
 
-        public void setName(String name) {
-            this.name = name;
-        }
+            EntryLoop: for (int j = 0; j < entryArray.length; j++) {
+                String[] split = entryArray[j].trim().split(" ");
 
-        public java.util.ArrayList<Entry> getEntries() {
-            return entries;
-        }
+                long destination = Long.parseLong(split[0].trim());
+                long start = Long.parseLong(split[1].trim());
+                long range = Long.parseLong(split[2].trim());
 
-        public void setEntries(java.util.ArrayList<Entry> entries) {
-            this.entries = entries;
-        }
+                if (seed >= start && seed < start + range) {
 
-        public void addEntry(Entry entry) {
-            if (this.entries == null) {
-                this.entries = new java.util.ArrayList<Entry>();
+                    long delta = seed - start;
+                    seed = destination + delta;
+
+                    break EntryLoop;
+                }
             }
-            this.entries.add(entry);
-        }
-    }
 
-    class Entry {
+            if (i == almacLength - 1) {
 
-        @Override
-        public String toString() {
-            return "Entry [destinationRangeStart=" + destinationRangeStart + ", sourceRangeStart=" + sourceRangeStart
-                    + ", rangeLength=" + rangeLength + "]";
-        }
+                if (seed < shortestDistance.get()) {
 
-        long destinationRangeStart;
-        long sourceRangeStart;
-        long rangeLength;
-
-        public long convertValue(long value) {
-
-            if (value >= sourceRangeStart && value < sourceRangeStart + rangeLength) {
-
-                long delta = value - sourceRangeStart;
-
-                long convertedSeedValue = destinationRangeStart + delta;
-
-                return convertedSeedValue;
+                    System.out.println("new shortestDistance: " + seed);
+                    shortestDistance.set(seed);
+                }
+                return;
             }
-            return value;
-        }
-
-        public long getDestinationRangeStart() {
-            return destinationRangeStart;
-        }
-
-        public void setDestinationRangeStart(long destinationRangeStart) {
-            this.destinationRangeStart = destinationRangeStart;
-        }
-
-        public long getSourceRangeStart() {
-            return sourceRangeStart;
-        }
-
-        public void setSourceRangeStart(long sourceRangeStart) {
-            this.sourceRangeStart = sourceRangeStart;
-        }
-
-        public long getRangeLength() {
-            return rangeLength;
-        }
-
-        public void setRangeLength(long rangeLength) {
-            this.rangeLength = rangeLength;
         }
 
     }
 
-    private String getInput() {
+    private long testingeru(long abc) {
+
+        return abc;
+    }
+
+    /*
+     * end start range
+     * 0 _ 15 __ 37 ---> 15 till 51 -> -15
+     */
+    public String getInput() {
         return """
-                        seeds: 1044452533 40389941 3710737290 407166728 1552449232 639689359 3327654041 26912583 3440484265 219136668 1126550158 296212400 2332393052 229950158 200575068 532702401 4163696272 44707860 3067657312 45353528
+                seeds: 79 14 55 13
+
+                seed-to-soil map:
+                50 98 2
+                52 50 48
+
+                soil-to-fertilizer map:
+                0 15 37
+                37 52 2
+                39 0 15
+
+                fertilizer-to-water map:
+                49 53 8
+                0 11 42
+                42 0 7
+                57 7 4
+
+                water-to-light map:
+                88 18 7
+                18 25 70
+
+                light-to-temperature map:
+                45 77 23
+                81 45 19
+                68 64 13
+
+                temperature-to-humidity map:
+                0 69 1
+                1 0 69
+
+                humidity-to-location map:
+                60 56 37
+                56 93 4
+                        """;
+    }
+
+    public String getInput2() {
+        return """
+                seeds: 1044452533 40389941 3710737290 407166728 1552449232 639689359 3327654041 26912583 3440484265 219136668 1126550158 296212400 2332393052 229950158 200575068 532702401 4163696272 44707860 3067657312 45353528
 
                 seed-to-soil map:
                 1953514507 1808056938 198190267
@@ -454,43 +368,4 @@ public class Day_05_02 {
                 2961556571 3844101660 13480958
                         """;
     }
-
-    private String getInput2() {
-        return """
-                seeds: 79 14 55 13
-
-                seed-to-soil map:
-                50 98 2
-                52 50 48
-
-                soil-to-fertilizer map:
-                0 15 37
-                37 52 2
-                39 0 15
-
-                fertilizer-to-water map:
-                49 53 8
-                0 11 42
-                42 0 7
-                57 7 4
-
-                water-to-light map:
-                88 18 7
-                18 25 70
-
-                light-to-temperature map:
-                45 77 23
-                81 45 19
-                68 64 13
-
-                temperature-to-humidity map:
-                0 69 1
-                1 0 69
-
-                humidity-to-location map:
-                60 56 37
-                56 93 4
-                """;
-    }
-
 }
