@@ -3,6 +3,8 @@ package com.soeguet.day05;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.base.Optional;
+
 /**
  * Day_05_02
  */
@@ -10,8 +12,7 @@ public class Day_05_02 {
 
     public Day_05_02() {
 
-        AtomicLong shortestDistance = new AtomicLong(Long.MAX_VALUE);
-        String[] splitInput = getInput().trim().split("\n\n");
+        String[] splitInput = getInput2().trim().split("\n\n");
 
         String[] seedValues = splitInput[0].split(": ")[1].trim().split(" ");
 
@@ -41,12 +42,36 @@ public class Day_05_02 {
             maps.add(map);
         }
 
+        AtomicLong distance = new AtomicLong(46);
+        AtomicLong cacheSeedValue = new AtomicLong(0);
+        AtomicBoolean seedFound = new AtomicBoolean(false);
+        do {
+            // setup cached value
+            cacheSeedValue.set(distance.get());
 
-        long seed = 56;
+            // run through maps
+            maps.reversed().stream().forEach(map -> {
 
-        maps.reversed().stream().map(map -> map.tranformValue(seed)).forEach(System.out::println);
+                long value = cacheSeedValue.get();
+                long tranformValue = map.tranformValue(value);
+                cacheSeedValue.set(tranformValue);
+            });
 
-        System.out.println("am ende seed: " + seed);
+            // check if seed for this hypothetical distance exists
+            if (this.seedExists(cacheSeedValue.get(), seedValues)) {
+
+                break;
+
+            } else {
+
+                // increment value for next run
+                distance.getAndAdd(20);
+            }
+
+        } while (true);
+
+        System.out.println("distance " + distance.get());
+        System.out.println("cacheSeedValue " + cacheSeedValue.get());
     }
 
     class Map {
@@ -63,11 +88,39 @@ public class Day_05_02 {
 
         public long tranformValue(long value) {
 
+            System.out.println("long " + value);
             return entries.stream()
-                    .filter(entry -> value >= entry.start && value < entry.start + entry.range)
+                    .filter(entry -> value >= entry.destination && value < entry.destination + entry.range)
                     .findFirst()
-                    .map(Entry::destination).orElse(value);
+                    .map(entry -> {
+                        long delta = value - entry.destination;
+                        return entry.start + delta;
+                    }).orElse(value);
         }
+
+        public String getName() {
+            return name;
+        }
+
+        public ArrayList<Entry> getEntries() {
+            return entries;
+        }
+    }
+
+    private boolean seedExists(long seed, String[] seedValues) {
+
+        for (int i = 0; i < seedValues.length; i+=2) {
+
+            long start = Long.parseLong(seedValues[i]);
+            long range = Long.parseLong(seedValues[i + 1]);
+
+            if (seed >= start && seed < start + range) {
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     record Entry(long destination, long start, long range) {
