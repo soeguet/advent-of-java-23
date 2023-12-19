@@ -1,7 +1,6 @@
 package com.soeguet.day05;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -12,101 +11,66 @@ public class Day_05_02 {
     public Day_05_02() {
 
         AtomicLong shortestDistance = new AtomicLong(Long.MAX_VALUE);
-        String[] splitInput = getInput2().trim().split("\n\n");
+        String[] splitInput = getInput().trim().split("\n\n");
 
         String[] seedValues = splitInput[0].split(": ")[1].trim().split(" ");
 
-        String[][] mapAlamac = {
-                splitInput[1].split("map:\n")[1].trim().split("\n"),
-                splitInput[2].split("map:\n")[1].trim().split("\n"),
-                splitInput[3].split("map:\n")[1].trim().split("\n"),
-                splitInput[4].split("map:\n")[1].trim().split("\n"),
-                splitInput[5].split("map:\n")[1].trim().split("\n"),
-                splitInput[6].split("map:\n")[1].trim().split("\n"),
-                splitInput[7].split("map:\n")[1].trim().split("\n")
-        };
+        ArrayList<Map> maps = new ArrayList<>();
 
-        try (ExecutorService executors = Executors.newVirtualThreadPerTaskExecutor()) {
+        for (int i = 1; i < splitInput.length; i++) {
 
-            for (int i = 1; i <= seedValues.length; i += 2) {
+            String mapString = splitInput[i];
 
-                System.out.println("seedValues.length: " + seedValues.length);
-                System.out.println("i: " + i);
+            String mapName = mapString.split(":\n")[0].trim();
 
-                long start = Long.parseLong(seedValues[i - 1]);
-                long range = Long.parseLong(seedValues[i]);
+            Map map = new Map(mapName);
 
-                for (long j = 0; j < range; j++) {
+            String[] mapValues = mapString.split(":\n")[1].trim().split("\n");
 
-                    if (j %10_000 == 0) {
-                        System.out.println("j: " + j);
-                    }
+            for (int j = 0; j < mapValues.length; j++) {
 
-                    final long seed = start + j;
-                    executors.submit(() -> {
-                        this.determineShortestDistance(mapAlamac, seed, shortestDistance);
-                    });
-                }
+                String[] mapRow = mapValues[j].trim().split(" ");
+
+                long destination = Long.parseLong(mapRow[0]);
+                long start = Long.parseLong(mapRow[1]);
+                long range = Long.parseLong(mapRow[2]);
+
+                map.addEntry(new Entry(destination, start, range));
             }
 
-        } catch (Exception e) {
-            // TODO: handle exception
-            System.out.println(e.getMessage());
-        } finally {
+            maps.add(map);
+        }
 
-            System.out.println("The shortest distance is: " + shortestDistance.get() + " meters");
+
+        long seed = 56;
+
+        maps.reversed().stream().map(map -> map.tranformValue(seed)).forEach(System.out::println);
+
+        System.out.println("am ende seed: " + seed);
+    }
+
+    class Map {
+        String name;
+        ArrayList<Entry> entries = new ArrayList<>();
+
+        public Map(String name) {
+            this.name = name;
+        }
+
+        public void addEntry(Entry entry) {
+            entries.add(entry);
+        }
+
+        public long tranformValue(long value) {
+
+            return entries.stream()
+                    .filter(entry -> value >= entry.start && value < entry.start + entry.range)
+                    .findFirst()
+                    .map(Entry::destination).orElse(value);
         }
     }
 
-    /**
-     * convert seed nr to distance
-     * 
-     * @param mapAlamac
-     * @param seedCurrent
-     * @param shortestDistance
-     */
-    private void determineShortestDistance(String[][] mapAlamac, long seedCurrent, AtomicLong shortestDistance) {
-
-        System.out.print(".");
-        int almacLength = mapAlamac.length;
-        long seed = seedCurrent;
-
-        MapLoop: for (int i = 0; i < almacLength; i++) {
-
-            String[] entryArray = mapAlamac[i];
-
-            EntryLoop: for (int j = 0; j < entryArray.length; j++) {
-                String[] split = entryArray[j].trim().split(" ");
-
-                long destination = Long.parseLong(split[0].trim());
-                long start = Long.parseLong(split[1].trim());
-                long range = Long.parseLong(split[2].trim());
-
-                if (seed >= start && seed < start + range) {
-
-                    long delta = seed - start;
-                    seed = destination + delta;
-
-                    break EntryLoop;
-                }
-            }
-
-            if (i == almacLength - 1) {
-
-                if (seed < shortestDistance.get()) {
-
-                    System.out.println("new shortestDistance: " + seed);
-                    shortestDistance.set(seed);
-                }
-                return;
-            }
-        }
-
-    }
-
-    private long testingeru(long abc) {
-
-        return abc;
+    record Entry(long destination, long start, long range) {
     }
 
     /*
