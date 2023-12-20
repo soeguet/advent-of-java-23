@@ -3,8 +3,6 @@ package com.soeguet.day05;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.base.Optional;
-
 /**
  * Day_05_02
  */
@@ -44,7 +42,6 @@ public class Day_05_02 {
 
         AtomicLong distance = new AtomicLong(46);
         AtomicLong cacheSeedValue = new AtomicLong(0);
-        AtomicBoolean seedFound = new AtomicBoolean(false);
         do {
             // setup cached value
             cacheSeedValue.set(distance.get());
